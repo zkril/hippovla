@@ -83,6 +83,12 @@ DATASET_NAMED_MIXTURES = {
     "BEHAVIOR_challenge": [
         ("BEHAVIOR_challenge", 1.0, "R1Pro"),
     ],
+    "robolatent_pickxtimes_left": [
+        ("robolatent_pickxtimes_left", 1.0, "robolatent_single_arm_joint"),
+    ],
+    "robolatent_uncoverblock_left": [
+        ("robolatent_uncoverblock_left", 1.0, "robolatent_single_arm_joint"),
+    ],
 
 
     "SO101_pick": [

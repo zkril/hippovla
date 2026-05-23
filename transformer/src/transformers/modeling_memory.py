@@ -130,12 +130,11 @@ class ShortTermMemoryBank(nn.Module):
         """
         更新记忆，3个层级分别处理，支持 batch 中不同 timestep。
         """
-        assert memory.dim() == 6, f"memory must be [B,3,T,2,64,D], got {memory.shape}"
-        assert visual.dim() == 5, f"visual must be [B,3,2,64,D], got {visual.shape}"
+        assert memory.dim() == 6, f"memory must be [B,3,T,V,S,D], got {memory.shape}"
+        assert visual.dim() == 5, f"visual must be [B,3,V,S,D], got {visual.shape}"
         B, L, T, V, S, D = memory.shape
         assert L == self.num_levels
         assert T == self.num_timesteps
-        assert V == 2
         assert S == self.num_slots
         assert visual.shape == (B, L, V, S, D)
         

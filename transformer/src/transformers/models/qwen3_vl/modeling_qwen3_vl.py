@@ -1264,23 +1264,22 @@ class Qwen3VLModel(Qwen3VLPreTrainedModel):
             total_mem_tokens = deepstack_memory_embeds[0].shape[0]
             total_vis_tokens = deepstack_visual_embeds[0].shape[0]
             
-            # 推断N：total = B * 5 * 2 * N_mem 或 B * 2 * N_vis
-            N_mem = total_mem_tokens // (batch_size * memorys_length * 2)
-            N_vis = total_vis_tokens // (batch_size * 2)
-            
+            # 从 image_grid_thw 推断视角数（num_images = batch_size * num_views）
+            num_views = image_grid_thw.shape[0] // batch_size
+            N_mem = total_mem_tokens // (batch_size * memorys_length * num_views)
+            N_vis = total_vis_tokens // (batch_size * num_views)
+
             # ========== 3. 直接构造tensor，避免多次stack ==========
             # 预分配目标tensor，减少内存碎片
-            memory_tensor = torch.empty(batch_size, 3, memorys_length, 2, N_mem, dim, 
+            memory_tensor = torch.empty(batch_size, 3, memorys_length, num_views, N_mem, dim,
                                         device=device, dtype=deepstack_memory_embeds[0].dtype)
-            visual_tensor = torch.empty(batch_size, 3, 2, N_vis, dim,
+            visual_tensor = torch.empty(batch_size, 3, num_views, N_vis, dim,
                                         device=device, dtype=deepstack_visual_embeds[0].dtype)
-            
+
             # 填充数据（in-place，避免临时tensor）
             for level, (mem_feat, vis_feat) in enumerate(zip(deepstack_memory_embeds, deepstack_visual_embeds)):
-                # mem: [B*5*2*N_mem, D] -> [B, 5, 2, N_mem, D]
-                memory_tensor[:, level] = mem_feat.view(batch_size, memorys_length, 2, N_mem, dim)
-                # vis: [B*2*N_vis, D] -> [B, 2, N_vis, D]
-                visual_tensor[:, level] = vis_feat.view(batch_size, 2, N_vis, dim)
+                memory_tensor[:, level] = mem_feat.view(batch_size, memorys_length, num_views, N_mem, dim)
+                visual_tensor[:, level] = vis_feat.view(batch_size, num_views, N_vis, dim)
             
             # 立即释放原始特征
             del deepstack_memory_embeds, deepstack_visual_embeds, visual_memorys

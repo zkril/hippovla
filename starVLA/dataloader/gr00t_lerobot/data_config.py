@@ -983,6 +983,87 @@ class AgilexData50Config:
 
         return ComposedModalityTransform(transforms=transforms)
 
+class RobolatentSingleArmJointConfig:
+    video_keys = [
+        "video.cam_head",
+        "video.cam_high",
+        "video.cam_left_wrist",
+        "video.cam_right_wrist",
+    ]
+
+    state_keys = [
+        "state.joints",
+        "state.gripper",
+    ]
+
+    action_keys = [
+        "action.joints",
+        "action.gripper",
+    ]
+
+    state_key_dims = {
+        "state.joints": 6,
+        "state.gripper": 1,
+    }
+
+    action_key_dims = {
+        "action.joints": 6,
+        "action.gripper": 1,
+    }
+
+    language_keys = ["annotation.human.action.task_description"]
+
+    observation_indices = [0]
+
+    # RynnBrainOFT / L1RegressionActionHead:
+    # future_action_window_size = 7
+    # num_actions_chunk = 8
+    action_indices = list(range(8))
+
+    def modality_config(self):
+        return {
+            "video": ModalityConfig(
+                delta_indices=self.observation_indices,
+                modality_keys=self.video_keys,
+            ),
+            "state": ModalityConfig(
+                delta_indices=self.observation_indices,
+                modality_keys=self.state_keys,
+            ),
+            "action": ModalityConfig(
+                delta_indices=self.action_indices,
+                modality_keys=self.action_keys,
+            ),
+            "language": ModalityConfig(
+                delta_indices=self.observation_indices,
+                modality_keys=self.language_keys,
+            ),
+        }
+
+    def transform(self):
+        return ComposedModalityTransform(
+            transforms=[
+                StateActionToTensor(apply_to=self.state_keys),
+                StateActionTransform(
+                    apply_to=self.state_keys,
+                    normalization_modes={
+                        "state.joints": "min_max",
+                        "state.gripper": "binary",
+                    },
+                ),
+                StateActionToTensor(apply_to=self.action_keys),
+                StateActionTransform(
+                    apply_to=self.action_keys,
+                    normalization_modes={
+                        "action.joints": "min_max",
+                        "action.gripper": "binary",
+                    },
+                ),
+            ]
+        )
+
+
+
 ROBOT_TYPE_CONFIG_MAP = {
     "libero_franka": Libero4in1DataConfig(),
     "oxe_droid": OxeDroidDataConfig(),
@@ -994,7 +1075,7 @@ ROBOT_TYPE_CONFIG_MAP = {
     "robotwin": AgilexDataConfig(),
     "robotwin50": AgilexData50Config(),
     "fourier_gr1_arms_waist": FourierGr1ArmsWaistDataConfig(),
-    
+    "robolatent_single_arm_joint": RobolatentSingleArmJointConfig(),
     "custom_robot_config": SingleFrankaRobotiqDeltaEefDataConfig(),
 }
 

@@ -1600,8 +1600,13 @@ class LeRobotSingleDataset(Dataset):
         if original_key is None:
             original_key = key
         if self._lerobot_version == "v2.0":
+            # prefer short key (e.g. "cam_head") which matches the actual directory name;
+            # fall back to original_key for datasets that use the full feature name as dir
+            video_key_for_path = key if (self.dataset_path / self.video_path_pattern.format(
+                episode_chunk=chunk_index, episode_index=trajectory_id, video_key=key
+            )).exists() else original_key
             video_filename = self.video_path_pattern.format(
-                episode_chunk=chunk_index, episode_index=trajectory_id, video_key=original_key
+                episode_chunk=chunk_index, episode_index=trajectory_id, video_key=video_key_for_path
             )
         elif self._lerobot_version == "v3.0":
             episode_meta = self.trajectory_ids_to_metadata[trajectory_id]
@@ -2167,7 +2172,7 @@ class LeRobotMixtureDataset(Dataset):
         print(f"Dataset lengths: {self._dataset_lengths}")
 
         # 2. Dataset sampling weights
-        self._dataset_sampling_weights = np.array(dataset_sampling_weights)
+        self._dataset_sampling_weights = np.array(dataset_sampling_weights, dtype=np.float64)
         
         if self.balance_dataset_weights:
             self._dataset_sampling_weights *= self._dataset_lengths
@@ -2486,13 +2491,12 @@ class LeRobotMixtureDataset(Dataset):
         if len(self.datasets) == 0:
             return 0
             
-        # Check if any dataset lengths are 0 or NaN
-        if np.any(self.dataset_lengths == 0) or np.any(np.isnan(self.dataset_lengths)):
-            print(f"Warning: Found zero or NaN dataset lengths: {self.dataset_lengths}")
-            # Filter out zero/NaN length datasets
-            valid_indices = (self.dataset_lengths > 0) & (~np.isnan(self.dataset_lengths))
+        # Check if any dataset lengths are 0
+        if np.any(self.dataset_lengths == 0):
+            print(f"Warning: Found zero dataset lengths: {self.dataset_lengths}")
+            valid_indices = self.dataset_lengths > 0
             if not np.any(valid_indices):
-                print("Error: All datasets have zero or NaN length")
+                print("Error: All datasets have zero length")
                 return 0
         else:
             valid_indices = np.ones(len(self.datasets), dtype=bool)
