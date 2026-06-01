@@ -1050,6 +1050,7 @@ class RobolatentSingleArmJointConfig:
                         "state.joints": "min_max",
                         "state.gripper": "binary",
                     },
+                    binary_threshold=0.05,
                 ),
                 StateActionToTensor(apply_to=self.action_keys),
                 StateActionTransform(
@@ -1058,6 +1059,7 @@ class RobolatentSingleArmJointConfig:
                         "action.joints": "min_max",
                         "action.gripper": "binary",
                     },
+                    binary_threshold=0.05,
                 ),
             ]
         )

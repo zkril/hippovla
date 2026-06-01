@@ -3,12 +3,8 @@ set -euo pipefail
 
 export PYTHONPATH=$(pwd):${PYTHONPATH:-}
 
-
-# 根据你的机器改。如果单机 4 卡，就用 0,1,2,3
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 
-# 如果是单机多卡，通常不需要强行指定 lo。
-# 如果你之前 NCCL 正常，就保留；如果通信卡住，先注释掉下面两行。
 export NCCL_SOCKET_IFNAME=lo
 export NCCL_IB_HCA=mlx5_2,mlx5_3
 
@@ -18,7 +14,7 @@ export NCCL_TIMEOUT=10000
 export NCCL_SOCKET_TIMEOUT_MS=360000
 
 ###########################################################################################
-# === Robolatent config ===
+# === Robolatent config (no memory) ===
 Framework_name=RynnBrainOFT
 freeze_module_list=''
 
@@ -27,11 +23,9 @@ base_vlm=playground/Pretrained_models/RynnBrain-CoP-8B
 config_yaml=examples/Robolatent/train_files/starvla_robolatent_rynnbrainoft.yaml
 
 robolatent_data_root=/root/autodl-tmp/datasets
-# data_mix=robolatent_uncoverblock_left
 data_mix=robolatent_pickxtimes_left
 run_root_dir=./results/Checkpoints
-# run_id=robolatent_uncoverblock_left_RynnBrainOFT
-run_id=robolatent_pickxtimes_left_RynnBrainOFT
+run_id=robolatent_pickxtimes_left_RynnBrainOFT_nomemory
 ###########################################################################################
 
 output_dir=${run_root_dir}/${run_id}
@@ -45,6 +39,7 @@ accelerate launch \
   --config_yaml ${config_yaml} \
   --framework.name ${Framework_name} \
   --framework.qwenvl.base_vlm ${base_vlm} \
+  --framework.qwenvl.memory false \
   --framework.action_model.action_dim 7 \
   --framework.action_model.state_dim 7 \
   --framework.action_model.future_action_window_size 7 \
@@ -54,6 +49,7 @@ accelerate launch \
   --datasets.vla_data.action_type joint \
   --datasets.vla_data.per_device_batch_size 4 \
   --datasets.vla_data.video_backend decord \
+  --datasets.vla_data.memory false \
   --trainer.freeze_modules ${freeze_module_list} \
   --trainer.max_train_steps 20000 \
   --trainer.save_interval 2000 \
