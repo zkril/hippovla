@@ -988,7 +988,6 @@ class RobolatentSingleArmJointConfig:
         "video.cam_head",
         "video.cam_high",
         "video.cam_left_wrist",
-        "video.cam_right_wrist",
     ]
 
     state_keys = [

@@ -28,10 +28,10 @@ config_yaml=examples/Robolatent/train_files/starvla_robolatent_rynnbrainoft.yaml
 
 robolatent_data_root=/root/autodl-tmp/datasets
 # data_mix=robolatent_uncoverblock_left
-data_mix=robolatent_pickxtimes_left
+data_mix=robolatent_pickxtimes
 run_root_dir=./results/Checkpoints
 # run_id=robolatent_uncoverblock_left_RynnBrainOFT
-run_id=robolatent_pickxtimes_left_RynnBrainOFT
+run_id=robolatent_pickxtimes_RynnBrainOFT
 ###########################################################################################
 
 output_dir=${run_root_dir}/${run_id}
